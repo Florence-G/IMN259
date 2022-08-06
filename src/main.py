@@ -11,38 +11,36 @@ import calibrage
 import mise_correspondance
 import carte_profondeur
 
-# paths
-calib_path = "images_calibrage"
-image_path = "../images_figures"
-sauvegarde_path = "../images_sauvegarde"
-
-# caracteristiques de calibrage
-nb_colonnes = 8
-nb_lignes = 5
-taille = (nb_colonnes, nb_lignes)
 
 def main():
 
+    # paths
+    calib_path = "images_calibrage"
+    image_path = "images_figures"
+    sauvegarde_path = "images_sauvegarde"
+
+    # caracteristiques de calibrage
+    nb_colonnes = 8
+    nb_lignes = 5
+    taille = (nb_colonnes, nb_lignes)
+
     # effectuer le calibrage
-    F, mL, mR = calibrage.calibrage(calib_path, taille)
-    print(F)
-    print(mL)
-    print(mR)
+    matriceFondamentale, matriceEssentielle, matriceCamera_g, matriceCamera_d = calibrage.calibrage(calib_path, taille)
 
-    # # effectuer la validation
-    # calibrage.validation()
+    # effectuer la validation
+    calibrage.validation()
 
-    # # effectuer la mise en correspondance
-    # i1, i2, p1, p2 = mise_correspondance.miseEnCorrespondance(F)
+    # effectuer la mise en correspondance
+    mise_correspondance.miseEnCorrespondance(image_path, matriceFondamentale)
 
-    # # effectuer la validation
-    # mise_correspondance.validation()
+    # effectuer la validation
+    mise_correspondance.validation()
 
     # # evaluer les disparites
     # disp, dispbrute = carte_profondeur.disparite(i1, i2)
 
     # # effectuer le calcul de profondeur
-    # carte_profondeur.calcul_profondeur(disp, m, sauvegarde_path + "/mapProfondeur.jpg")
+    # carte_profondeur.calcul_profondeur(image_path + "/photoFlo1.jpg")
 
     # # effectuer la validation
     # carte_profondeur.validation()
