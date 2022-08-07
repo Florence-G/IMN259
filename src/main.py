@@ -1,15 +1,12 @@
 #!/usr/bin/env python
 
-import numpy as np
 import cv2 as cv
-import matplotlib.pyplot as plt
-from os import listdir
-from os.path import isfile, join
-
+import glob
 
 import calibrage
 import mise_correspondance
-import carte_profondeur
+import cartes
+import reconstruction_3D
 
 
 def main():
@@ -25,25 +22,33 @@ def main():
     taille = (nb_colonnes, nb_lignes)
 
     # effectuer le calibrage
-    matriceFondamentale, matriceEssentielle, matriceCamera_g, matriceCamera_d = calibrage.calibrage(calib_path, taille)
+    matriceFondamentale, transVec, matrice_g = calibrage.calibrage(calib_path, taille)
 
-    # effectuer la validation
-    calibrage.validation()
+    images = glob.glob("./" + image_path + "/*.jpg")
 
-    # effectuer la mise en correspondance
-    mise_correspondance.miseEnCorrespondance(image_path, matriceFondamentale)
+    for fname in images:
 
-    # effectuer la validation
-    mise_correspondance.validation()
+        # charger l'image
+        img = cv.imread(fname)
+        print(img.shape)
 
-    # # evaluer les disparites
-    # disp, dispbrute = carte_profondeur.disparite(i1, i2)
+        # conversion en gris
+        gris_img= cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
-    # # effectuer le calcul de profondeur
-    # carte_profondeur.calcul_profondeur(image_path + "/photoFlo1.jpg")
+        # séparer en 2
+        demie = len(img[0])/2
+        img_g = gris_img[:, :int(demie)]
+        img_d = gris_img[:, int(demie):]
 
-    # # effectuer la validation
-    # carte_profondeur.validation()
+        # effectuer la mise en correspondance
+        mise_correspondance.miseEnCorrespondance(img_g, img_d, matriceFondamentale)
+
+        # evaluer les disparites
+        carte_disparite = cartes.disparite(img_g, img_d)
+
+        # effectuer la reconstruction 3D
+        reconstruction_3D.map_3D(img_g, carte_disparite, matrice_g)
+
 
 
 if __name__ == "__main__":

@@ -4,16 +4,17 @@ import numpy as np
 import cv2 as cv
 import glob
 
-#---------------------------------------------------------------------------#
-# Code inspiré de https://learnopencv.com/camera-calibration-using-opencv/
-#---------------------------------------------------------------------------#
-
 
 def calibrage(path_calib, taille):
 
     print("#---------------------------------------------------------------------------#")
     print("# ------------------------ Début du calibrage ------------------------------")
     print("#---------------------------------------------------------------------------#")
+
+    #---------------------------------------------------------------------------#
+    # Code inspiré de https://learnopencv.com/camera-calibration-using-opencv/
+    #---------------------------------------------------------------------------#
+
 
     images = glob.glob("./" + path_calib + "/*.jpg")
 
@@ -26,10 +27,11 @@ def calibrage(path_calib, taille):
     imgpoints_g = []
     imgpoints_d = []
 
-    # image size
-    imgSize = [1280, 960]
+     # image size
+    imgSize = (1280,960)
 
     print("# ------------------------ Recherche des coins ------------------------------")
+
 
     for fname in images:
 
@@ -64,8 +66,9 @@ def calibrage(path_calib, taille):
             imgpoints_d.append(sub_coins_d)
 
             # visualisation
-            # img1 = cv.drawChessboardCorners(img, taille, sub_coins_g, True)
-            # img2 = cv.drawChessboardCorners(img, taille, sub_coins_d, True)
+            img1 = cv.drawChessboardCorners(img, taille, sub_coins_g, True)
+            img2 = cv.drawChessboardCorners(img, taille, sub_coins_d, True)
+            cv.imwrite("./images_sauvegarde/corners.jpg", img1)
 
             # cv.imshow('img_g',img1)
             # cv.imshow('img_d',img2)
@@ -74,7 +77,7 @@ def calibrage(path_calib, taille):
 
     cv.destroyAllWindows()
 
-    print("# ------------------------ Calibrage ------------------------------")
+    print("# ------------------------ Calibrage ------------------------------ #")
 
     # Calibrage
     retval_g, matriceCamera_g, distorsionCoeff_g, rotVec_g, transVec_g = cv.calibrateCamera(objpoints, imgpoints_g, imgSize, None, None)
@@ -108,11 +111,33 @@ def calibrage(path_calib, taille):
     print("\nDistorsion gauche:\n", distorsionCoeff_g)
     print("\nDistorsion droite:\n", distorsionCoeff_d)
 
+    validation_rotation(rotVec)
+    validation_matrice_triangulaire(matriceCamera_d)
+    validation_matrice_triangulaire(matriceCamera_g)
+
     print("#---------------------------------------------------------------------------#")
     print("# ------------------------- Fin du calibrage --------------------------------")
     print("#---------------------------------------------------------------------------#")
 
-    return matriceFondamentale, matriceEssentielle, matriceCamera_g, matriceCamera_d
+    return matriceFondamentale, transVec, matriceCamera_g
 
-def validation():
-    a="h"
+
+def validation_rotation(matrice_rotation):
+
+    # Matrice de rotation est une matrice orthonormale
+    transposee = np.transpose(matrice_rotation)
+    I_test = np.dot(transposee, matrice_rotation)
+    I_vrai = [[1,0,0],[0,1,0],[0,0,1]]
+    for i in range(3):
+      for j in range(3):
+         if (abs(I_test[i][j] - I_vrai[i][j]) > 0.001):
+            print("Erreur de validation : la matrice de rotation n'est pas orthonormale")
+            return
+    return
+
+def validation_matrice_triangulaire(matrice_cam):
+
+	# Matrice intrinsquèque est une matrice triangulaire supérieure, alors vérifier si la matrice retourne est triangulaire supérieure
+    estTriangulaire = np.allclose(matrice_cam, np.triu(matrice_cam)) # check if upper triangular
+    if not estTriangulaire:
+        print("Erreur de validation : au moins une des matrices intrinsèques n'est pas triangulaire suppérieure")
